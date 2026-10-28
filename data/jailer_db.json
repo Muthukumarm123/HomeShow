@@ -1,0 +1,115 @@
+{
+  "bookings": [
+    {
+      "id": "bk_anirudh_01",
+      "booking_reference": "JLR-8842-A",
+      "full_name": "Anirudh Ravichander",
+      "email": "anirudh.family@gmail.com",
+      "phone": "+44 7700 900112",
+      "requested_ticket_count": 1,
+      "uno_challenge_accepted": true,
+      "uno_game_1_completed": true,
+      "uno_game_2_completed": true,
+      "booking_status": "AWAITING_APPROVAL",
+      "created_at": "2026-10-28T14:30:00.000Z",
+      "updated_at": "2026-10-28T14:45:00.000Z"
+    },
+    {
+      "id": "bk_varun_02",
+      "booking_reference": "JLR-5921-V",
+      "full_name": "Varun Pandian",
+      "email": "varun.p@gmail.com",
+      "phone": "+44 7700 900334",
+      "requested_ticket_count": 1,
+      "uno_challenge_accepted": true,
+      "uno_game_1_completed": true,
+      "uno_game_2_completed": false,
+      "booking_status": "UNO_IN_PROGRESS",
+      "created_at": "2026-10-28T14:50:00.000Z",
+      "updated_at": "2026-10-28T15:00:00.000Z"
+    },
+    {
+      "id": "bk_priya_03",
+      "booking_reference": "JLR-3104-P",
+      "full_name": "Priya Muthuvel",
+      "email": "priya.muthuvel@gmail.com",
+      "phone": "+44 7700 900556",
+      "requested_ticket_count": 1,
+      "uno_challenge_accepted": true,
+      "uno_game_1_completed": false,
+      "uno_game_2_completed": false,
+      "booking_status": "PENDING",
+      "created_at": "2026-10-28T15:05:00.000Z",
+      "updated_at": "2026-10-28T15:05:00.000Z"
+    },
+    {
+      "id": "bk_rajini_00",
+      "booking_reference": "JLR-2462-24",
+      "full_name": "Rajinikanth Fan",
+      "email": "rajini.fan@example.com",
+      "phone": "+44 7700 900778",
+      "requested_ticket_count": 1,
+      "uno_challenge_accepted": true,
+      "uno_game_1_completed": true,
+      "uno_game_2_completed": true,
+      "booking_status": "CHECKED_IN",
+      "created_at": "2026-10-28T15:07:12.493Z",
+      "updated_at": "2026-10-28T15:07:25.773Z"
+    }
+  ],
+  "tickets": [
+    {
+      "id": "TK-JLR-6661",
+      "booking_id": "bk_rajini_00",
+      "ticket_token": "jlr_pass_ddaed8fa3037553d7da07d14aab5ff4f0d6f22ba62444b0a",
+      "ticket_token_hash": "f394c481dd9912c1fb7cb8bac920b7c47e26efb66a34351eab40ad7c15bbaf6c",
+      "qr_data_url": "data:image/png;base64,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",
+      "ticket_status": "CHECKED_IN",
+      "issued_at": "2026-10-28T15:07:20.117Z",
+      "checked_in_at": "2026-10-28T15:07:25.773Z",
+      "checked_in_by": "MasterOrganizer"
+    }
+  ],
+  "email_logs": [
+    {
+      "id": "eml_cffa6a8c1e911a09",
+      "booking_id": "bk_rajini_00",
+      "ticket_id": "TK-JLR-6661",
+      "recipient_email": "rajini.fan@example.com",
+      "delivery_status": "CONFIG_REQUIRED",
+      "provider_message_id": null,
+      "error_message": "RESEND_API_KEY is not set. Ticket generated and ready for direct in-app display and download.",
+      "attempted_at": "2026-10-28T15:07:20.118Z"
+    }
+  ],
+  "settings": {
+    "movie_title": "JAILER 2",
+    "event_name": "THE ULTIMATE FAMILY MOVIE NIGHT",
+    "event_date": "Saturday, November 14, 2026",
+    "event_time": "7:00 PM (UNO Arena starts at 6:00 PM)",
+    "venue": "The Grand Starlight Screening Lounge, Screen 1",
+    "trailer_url": "https://www.youtube.com/embed/Y5BeWdODPqo",
+    "authorised_gallery_image_urls": [
+      "/src/assets/images/jailer_hero_cinematic_1793199448445.jpg",
+      "/src/assets/images/jailer_uno_arena_1793199450537.jpg",
+      "/src/assets/images/jailer_movie_still_action_1793199450458.jpg"
+    ],
+    "booking_open": true,
+    "uno_winner_required": false,
+    "resend_from_email": "Jailer 2 Premiere <onboarding@resend.dev>"
+  },
+  "admins": [
+    {
+      "id": "admin_master_1",
+      "username": "admin",
+      "password_hash": "200433881ea635798e5e05554254e0b7b368d43db2ff03e93e42f4fc05a80bf2150ab0afee980ac8c73882ae7d1fb4abd71f5e3d857d24ff90c1cd92134311a2",
+      "salt": "ed3d2ff756c96d65bf1e267d6f7442b0",
+      "created_at": "2026-10-28T15:07:03.899Z",
+      "sessions": [
+        "adm_ae641759f705e8a7c589fc87832d5256a19635dd920e7aafd73618444456752f",
+        "adm_672ccbc55c88fb0999b8b6cf9b13f2ec060ec3c8e682e8671d16ee68b9f03116",
+        "adm_8f4d052a6c2a47ab7a999e8666d40c1ce75c97897c1502ea4580af9a3efff75a"
+      ]
+    }
+  ]
+}

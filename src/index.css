@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    background-color: #070708;
+    color: #F3F4F6;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1, h2, h3, .font-cinematic {
+    font-family: 'Cinzel', Georgia, serif;
+    letter-spacing: 0.05em;
+  }
+}
+
+.text-gold {
+  color: #F59E0B;
+}
+
+.bg-gold {
+  background-color: #F59E0B;
+}
+
+.border-gold {
+  border-color: rgba(245, 158, 11, 0.35);
+}
+
+.gold-gradient-text {
+  background: linear-gradient(135deg, #FDE68A 0%, #F59E0B 50%, #B45309 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.red-cinema-glow {
+  box-shadow: 0 0 45px -10px rgba(220, 38, 38, 0.45);
+}
+
+.gold-cinema-glow {
+  box-shadow: 0 0 40px -10px rgba(245, 158, 11, 0.35);
+}
+
+/* Custom scrollbar for cinema table */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #0D0D10;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272A;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3F3F46;
+}

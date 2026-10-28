@@ -1,0 +1,8 @@
+{
+  "name": "Jailer 2 Family Movie Night",
+  "description": "Premium cinema ticket booking and event pass system for Jailer 2 with UNO game verification, administrator controls, and QR code check-in.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
