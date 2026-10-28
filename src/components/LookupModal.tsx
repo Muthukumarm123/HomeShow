@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Search, CheckCircle2, Clock, AlertCircle, Ticket as TicketIcon, Gamepad2 } from 'lucide-react';
 import { TicketPass } from './TicketPass.tsx';
 import { Ticket, FamilyBooking, MovieSettings } from '../types.ts';
@@ -25,6 +25,20 @@ export const LookupModal: React.FC<LookupModalProps> = ({
     ticket: Ticket | null;
     event: MovieSettings;
   } | null>(null);
+
+  // Auto-search if opened with a ticket reference from link or booking confirmation
+  useEffect(() => {
+    if (isOpen && initialQuery && initialQuery.trim()) {
+      setQuery(initialQuery);
+      setLoading(true);
+      setError(null);
+      dataService
+        .lookupBooking(initialQuery.trim())
+        .then((data) => setResult(data))
+        .catch((err) => setError(err.message || 'Error looking up booking'))
+        .finally(() => setLoading(false));
+    }
+  }, [isOpen, initialQuery]);
 
   if (!isOpen) return null;
 

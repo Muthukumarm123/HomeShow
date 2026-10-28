@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Ticket as TicketIcon, Search, CheckCircle2, Clock, QrCode, Filter, ExternalLink } from 'lucide-react';
+import { Ticket as TicketIcon, Search, CheckCircle2, Clock, QrCode, Filter, MessageCircle, Copy, Check, Send } from 'lucide-react';
 import { Ticket, FamilyBooking } from '../../types.ts';
 
 interface SentTicketsTabProps {
@@ -10,6 +10,28 @@ interface SentTicketsTabProps {
 export const SentTicketsTab: React.FC<SentTicketsTabProps> = ({ tickets, onViewTicket }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'VALID' | 'CHECKED_IN'>('ALL');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const getTicketUrl = (ref: string) => {
+    if (typeof window === 'undefined') return '';
+    const cleanUrl = window.location.href.split('?')[0].split('#')[0];
+    return `${cleanUrl}?ticket=${encodeURIComponent(ref)}`;
+  };
+
+  const handleCopy = (ref: string, ticketId: string) => {
+    const url = getTicketUrl(ref);
+    navigator.clipboard.writeText(url);
+    setCopiedId(ticketId);
+    setTimeout(() => setCopiedId(null), 2500);
+  };
+
+  const handleWhatsApp = (guestName: string, ref: string) => {
+    const url = getTicketUrl(ref);
+    const text = encodeURIComponent(
+      `🎉 Hi ${guestName}! Here is your verified movie ticket pass:\n\n🎟️ ${url}\n\nShow this QR pass at the entrance!`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
 
   const filteredTickets = tickets.filter(({ ticket, booking }) => {
     const matchesSearch =
@@ -63,6 +85,20 @@ export const SentTicketsTab: React.FC<SentTicketsTabProps> = ({ tickets, onViewT
         </div>
       </div>
 
+      {/* Organizer Quick Guide Banner */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-neutral-900 to-[#141217] border border-amber-600/30 text-xs text-neutral-300 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
+        <div>
+          <span className="font-bold text-amber-400 block mb-0.5">
+            💡 How do attendees get their ticket and QR code?
+          </span>
+          <span className="text-neutral-400">
+            1. Click <strong>WhatsApp</strong> or <strong>Copy Link</strong> below to send the ticket directly to their phone.
+            <br className="hidden sm:inline" />
+            2. Or attendees can go to the website on their phone and click <strong>&quot;Look Up Ticket&quot;</strong> with their Booking Ref or Gmail.
+          </span>
+        </div>
+      </div>
+
       <div className="rounded-xl border border-neutral-800 bg-neutral-950/80 overflow-hidden shadow-xl">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
@@ -75,7 +111,7 @@ export const SentTicketsTab: React.FC<SentTicketsTabProps> = ({ tickets, onViewT
                 <th className="py-3.5 px-4">Issued Date</th>
                 <th className="py-3.5 px-4">Status</th>
                 <th className="py-3.5 px-4">Check-in Details</th>
-                <th className="py-3.5 px-4 text-right">Pass View</th>
+                <th className="py-3.5 px-4 text-right">Send / View Pass</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-neutral-800/60 text-neutral-300">
@@ -88,6 +124,7 @@ export const SentTicketsTab: React.FC<SentTicketsTabProps> = ({ tickets, onViewT
               ) : (
                 filteredTickets.map(({ ticket, booking }) => {
                   const isCheckedIn = ticket.ticket_status === 'CHECKED_IN';
+                  const isCopied = copiedId === ticket.id;
 
                   return (
                     <tr key={ticket.id} className="hover:bg-neutral-900/50 transition-colors">
@@ -138,13 +175,38 @@ export const SentTicketsTab: React.FC<SentTicketsTabProps> = ({ tickets, onViewT
                         )}
                       </td>
                       <td className="py-3.5 px-4 text-right whitespace-nowrap">
-                        <button
-                          onClick={() => booking && onViewTicket(booking, ticket)}
-                          className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 ml-auto cursor-pointer"
-                        >
-                          <QrCode className="w-3.5 h-3.5 text-amber-400" />
-                          <span>Show QR</span>
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {booking && (
+                            <>
+                              <button
+                                onClick={() => handleWhatsApp(booking.full_name, booking.booking_reference)}
+                                title="Send ticket to attendee via WhatsApp"
+                                className="px-2 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                              >
+                                <MessageCircle className="w-3.5 h-3.5" />
+                                <span className="hidden sm:inline">WhatsApp</span>
+                              </button>
+
+                              <button
+                                onClick={() => handleCopy(booking.booking_reference, ticket.id)}
+                                title="Copy attendee ticket link"
+                                className="px-2 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                              >
+                                {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                                <span className="hidden sm:inline">{isCopied ? 'Copied' : 'Link'}</span>
+                              </button>
+                            </>
+                          )}
+
+                          <button
+                            onClick={() => booking && onViewTicket(booking, ticket)}
+                            title="Open full ticket pass preview"
+                            className="px-2.5 py-1 rounded bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                          >
+                            <QrCode className="w-3.5 h-3.5" />
+                            <span>QR Pass</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

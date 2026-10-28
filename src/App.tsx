@@ -40,6 +40,18 @@ export default function App() {
       .catch((err) => {
         console.warn('Could not fetch initial event settings:', err);
       });
+
+    // Auto-open attendee ticket if URL has ?ticket=REF or ?ref=REF or ?booking=REF
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const ticketParam = params.get('ticket') || params.get('ref') || params.get('booking');
+      if (ticketParam && ticketParam.trim()) {
+        setLookupRef(ticketParam.trim());
+        setIsLookupOpen(true);
+      }
+    } catch (e) {
+      console.warn('Could not parse URL params', e);
+    }
   }, []);
 
   const handleScrollToSection = (id: string) => {

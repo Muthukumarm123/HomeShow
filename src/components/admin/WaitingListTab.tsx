@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, Edit2, Check, X, Ticket, AlertCircle, CheckCircle2, Mail, ExternalLink } from 'lucide-react';
+import { Search, Filter, Edit2, Check, X, Ticket, AlertCircle, CheckCircle2, Mail, ExternalLink, MessageCircle } from 'lucide-react';
 import { FamilyBooking } from '../../types.ts';
 
 interface WaitingListTabProps {
@@ -271,13 +271,31 @@ export const WaitingListTab: React.FC<WaitingListTabProps> = ({
                           )}
 
                           {hasTicket && (
-                            <button
-                              onClick={() => onViewTicket(b)}
-                              className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded transition-all flex items-center gap-1 cursor-pointer"
-                            >
-                              <Ticket className="w-3 h-3 text-amber-400" />
-                              <span>View Pass</span>
-                            </button>
+                            <>
+                              <button
+                                onClick={() => {
+                                  const cleanUrl = window.location.href.split('?')[0];
+                                  const url = `${cleanUrl}?ticket=${encodeURIComponent(b.booking_reference)}`;
+                                  const text = encodeURIComponent(
+                                    `🎉 Hi ${b.full_name}! Here is your verified movie ticket pass:\n\n🎟️ ${url}\n\nShow this QR pass at the entrance!`
+                                  );
+                                  window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+                                }}
+                                title="Send pass to attendee via WhatsApp"
+                                className="px-2 py-1 text-[11px] font-bold text-emerald-300 bg-emerald-950/70 hover:bg-emerald-900 border border-emerald-600/40 rounded transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <MessageCircle className="w-3 h-3 text-emerald-400" />
+                                <span className="hidden md:inline">WhatsApp</span>
+                              </button>
+
+                              <button
+                                onClick={() => onViewTicket(b)}
+                                className="px-2.5 py-1 text-[11px] font-bold uppercase tracking-wider text-neutral-200 bg-neutral-800 hover:bg-neutral-700 rounded transition-all flex items-center gap-1 cursor-pointer"
+                              >
+                                <Ticket className="w-3 h-3 text-amber-400" />
+                                <span>Pass</span>
+                              </button>
+                            </>
                           )}
 
                           {b.booking_status !== 'REJECTED' && b.booking_status !== 'CHECKED_IN' && (

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Ticket, CheckCircle2, XCircle, Mail, AlertTriangle, ShieldCheck, ExternalLink, Send } from 'lucide-react';
+import { Ticket, CheckCircle2, XCircle, Mail, AlertTriangle, ShieldCheck, ExternalLink, Send, MessageCircle, Copy, Check } from 'lucide-react';
 import { FamilyBooking } from '../../types.ts';
 
 interface ApproveBookingsTabProps {
@@ -21,6 +21,28 @@ export const ApproveBookingsTab: React.FC<ApproveBookingsTabProps> = ({
 }) => {
   const [rejectingBookingId, setRejectingBookingId] = useState<string | null>(null);
   const [rejectReason, setRejectReason] = useState('');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const getTicketUrl = (ref: string) => {
+    if (typeof window === 'undefined') return '';
+    const cleanUrl = window.location.href.split('?')[0].split('#')[0];
+    return `${cleanUrl}?ticket=${encodeURIComponent(ref)}`;
+  };
+
+  const handleCopy = (ref: string, bookingId: string) => {
+    const url = getTicketUrl(ref);
+    navigator.clipboard.writeText(url);
+    setCopiedId(bookingId);
+    setTimeout(() => setCopiedId(null), 2500);
+  };
+
+  const handleWhatsApp = (guestName: string, ref: string) => {
+    const url = getTicketUrl(ref);
+    const text = encodeURIComponent(
+      `🎉 Hi ${guestName}! Your movie night ticket is approved! Here is your official QR entry pass:\n\n🎟️ ${url}\n\nTap the link on your phone to view and show your ticket at the door!`
+    );
+    window.open(`https://api.whatsapp.com/send?text=${text}`, '_blank');
+  };
 
   // Bookings that have completed both UNO games and are waiting approval
   const awaitingBookings = bookings.filter(
@@ -49,21 +71,17 @@ export const ApproveBookingsTab: React.FC<ApproveBookingsTabProps> = ({
         </p>
       </div>
 
-      {/* Resend Status Banner */}
-      <div className="p-4 rounded-xl bg-neutral-900 border border-neutral-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Mail className="w-5 h-5 text-amber-400" />
-          <div className="text-xs">
-            <span className="font-bold text-white block">Automatic Email Delivery Status:</span>
-            {resendConfigured ? (
-              <span className="text-emerald-400">
-                Resend API Key is Active &bull; Tickets will automatically dispatch to guest inbox.
-              </span>
-            ) : (
-              <span className="text-neutral-400">
-                Resend API key not yet set in environment. Passes generate instantly with full QR code and can be viewed, downloaded, or shared in-app.
-              </span>
-            )}
+      {/* Ticket Delivery Guide Banner */}
+      <div className="p-4 rounded-xl bg-gradient-to-r from-neutral-900 to-[#141217] border border-amber-600/30 text-xs text-neutral-300 flex flex-col md:flex-row md:items-center justify-between gap-3 shadow-md">
+        <div className="flex items-start gap-3">
+          <MessageCircle className="w-5 h-5 text-emerald-400 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold text-emerald-400 block mb-0.5">
+              Direct Attendee Delivery (WhatsApp or Direct Link):
+            </span>
+            <span className="text-neutral-400">
+              When you click <strong>APPROVE &amp; SEND TICKET</strong>, the ticket with its QR code generates immediately. You can share it directly to the family member&apos;s phone via <strong>WhatsApp</strong> or <strong>Copy Ticket Link</strong>. Attendees can also view their pass anytime on the website homepage by clicking &quot;Look Up Ticket&quot;.
+            </span>
           </div>
         </div>
       </div>
@@ -166,27 +184,44 @@ export const ApproveBookingsTab: React.FC<ApproveBookingsTabProps> = ({
               No tickets approved yet.
             </div>
           ) : (
-            recentlyApproved.slice(0, 5).map((b) => (
-              <div key={b.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
-                <div>
-                  <span className="font-semibold text-white mr-3">{b.full_name}</span>
-                  <span className="font-mono text-neutral-400 mr-3">{b.booking_reference}</span>
-                  <span className="font-mono text-neutral-500">{b.email}</span>
+            recentlyApproved.slice(0, 5).map((b) => {
+              const isCopied = copiedId === b.id;
+
+              return (
+                <div key={b.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+                  <div>
+                    <span className="font-semibold text-white mr-3">{b.full_name}</span>
+                    <span className="font-mono text-neutral-400 mr-3">{b.booking_reference}</span>
+                    <span className="font-mono text-neutral-500">{b.email}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => handleWhatsApp(b.full_name, b.booking_reference)}
+                      className="px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <MessageCircle className="w-3.5 h-3.5" />
+                      <span>WhatsApp</span>
+                    </button>
+
+                    <button
+                      onClick={() => handleCopy(b.booking_reference, b.id)}
+                      className="px-2.5 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      {isCopied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{isCopied ? 'Copied' : 'Copy Link'}</span>
+                    </button>
+
+                    <button
+                      onClick={() => onViewTicket(b)}
+                      className="px-2.5 py-1 rounded bg-amber-400/20 hover:bg-amber-400/30 text-amber-300 border border-amber-500/30 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                    >
+                      <Ticket className="w-3.5 h-3.5" />
+                      <span>View Pass</span>
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-emerald-400 font-semibold font-mono">
-                    {b.booking_status}
-                  </span>
-                  <button
-                    onClick={() => onViewTicket(b)}
-                    className="px-3 py-1 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Ticket className="w-3.5 h-3.5 text-amber-400" />
-                    <span>View Pass</span>
-                  </button>
-                </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
       </div>
