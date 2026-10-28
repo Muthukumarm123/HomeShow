@@ -96,12 +96,13 @@ class DataService {
     this.initLocalFallback();
   }
 
-  // Check if Express backend is answering, else use static mode
+  // Check if Express backend is answering with valid JSON, else use static mode
   public async isBackendAvailable(): Promise<boolean> {
     if (this.hasBackend !== null) return this.hasBackend;
     try {
       const res = await fetch('/api/public/event-info', { method: 'GET' });
-      this.hasBackend = res.ok;
+      const contentType = res.headers.get('content-type') || '';
+      this.hasBackend = res.ok && contentType.includes('application/json');
     } catch {
       this.hasBackend = false;
     }
@@ -670,49 +671,79 @@ class DataService {
           },
           body: JSON.stringify({ token: tokenInput.trim() })
         });
-        if (res.ok) return await res.json();
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          return await res.json();
+        }
       } catch (_) {}
     }
 
-    // Local check
+    // Local check (GitHub Pages or fallback)
     const data = this.getLocalData();
     let clean = tokenInput.trim();
+
+    // Check if URL was scanned (e.g. https://.../?ticket=BK-1234 or ?ref=...)
+    if (clean.includes('ticket=') || clean.includes('ref=')) {
+      try {
+        const url = new URL(clean);
+        clean = url.searchParams.get('ticket') || url.searchParams.get('ref') || clean;
+      } catch (_) {
+        const match = clean.match(/[?&](?:ticket|ref)=([^&]+)/);
+        if (match) clean = decodeURIComponent(match[1]);
+      }
+    }
+
+    // Check if JSON was scanned from ticket QR
     try {
       if (clean.startsWith('{') && clean.endsWith('}')) {
         const parsed = JSON.parse(clean);
         if (parsed.token) clean = parsed.token;
         else if (parsed.tid) {
-          const t = data.tickets.find((item) => item.id === parsed.tid);
+          const t = data.tickets.find((item) => item.id.toLowerCase() === parsed.tid.toLowerCase());
           if (t) clean = t.ticket_token;
+          else clean = parsed.tid;
+        } else if (parsed.ref) {
+          clean = parsed.ref;
         }
       }
     } catch (_) {}
 
-    const ticket = data.tickets.find(
+    let ticket = data.tickets.find(
       (t) =>
         t.ticket_token === clean ||
         t.ticket_token_hash === clean ||
         t.id.toLowerCase() === clean.toLowerCase()
     );
 
+    // If ticket was not found directly, check by booking reference
     if (!ticket) {
       const bookingOnly = data.bookings.find(
         (b) => b.booking_reference.toLowerCase() === clean.toLowerCase()
       );
-      if (bookingOnly && bookingOnly.booking_status !== 'TICKET_SENT' && bookingOnly.booking_status !== 'APPROVED') {
+
+      if (bookingOnly) {
+        // If booking has an issued ticket, match it!
+        const matchingTicket = data.tickets.find((t) => t.booking_id === bookingOnly.id);
+        if (matchingTicket) {
+          ticket = matchingTicket;
+        } else if (bookingOnly.booking_status !== 'TICKET_SENT' && bookingOnly.booking_status !== 'APPROVED') {
+          return {
+            status: 'NOT_CONFIRMED',
+            ticket: null,
+            booking: bookingOnly,
+            message: 'Booking is still pending or UNO challenges are incomplete.'
+          };
+        }
+      }
+
+      if (!ticket) {
         return {
-          status: 'NOT_CONFIRMED',
+          status: 'INVALID',
           ticket: null,
-          booking: bookingOnly,
-          message: 'Booking is still pending or UNO challenges are incomplete.'
+          booking: null,
+          message: 'No valid ticket record found for this code.'
         };
       }
-      return {
-        status: 'INVALID',
-        ticket: null,
-        booking: null,
-        message: 'No valid ticket record found for this code.'
-      };
     }
 
     const booking = data.bookings.find((b) => b.id === ticket.booking_id) || null;
@@ -748,7 +779,10 @@ class DataService {
           },
           body: JSON.stringify({ ticket_id: ticketId, admin_user: adminUser })
         });
-        if (res.ok) return await res.json();
+        const contentType = res.headers.get('content-type') || '';
+        if (res.ok && contentType.includes('application/json')) {
+          return await res.json();
+        }
       } catch (_) {}
     }
 

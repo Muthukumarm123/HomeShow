@@ -527,6 +527,17 @@ export class DatabaseService {
     message: string;
   } {
     let cleanToken = tokenOrData.trim();
+
+    // Check if URL was scanned (e.g. ?ticket=... or ?ref=...)
+    if (cleanToken.includes('ticket=') || cleanToken.includes('ref=')) {
+      try {
+        const url = new URL(cleanToken);
+        cleanToken = url.searchParams.get('ticket') || url.searchParams.get('ref') || cleanToken;
+      } catch (_) {
+        const match = cleanToken.match(/[?&](?:ticket|ref)=([^&]+)/);
+        if (match) cleanToken = decodeURIComponent(match[1]);
+      }
+    }
     
     // Check if tokenOrData is JSON from QR
     try {
@@ -534,14 +545,17 @@ export class DatabaseService {
         const parsed = JSON.parse(cleanToken);
         if (parsed.token) cleanToken = parsed.token;
         else if (parsed.tid) {
-          const t = this.db.tickets.find(item => item.id === parsed.tid);
+          const t = this.db.tickets.find(item => item.id.toLowerCase() === parsed.tid.toLowerCase());
           if (t) cleanToken = t.ticket_token;
+          else cleanToken = parsed.tid;
+        } else if (parsed.ref) {
+          cleanToken = parsed.ref;
         }
       }
     } catch (_) {}
 
     // Lookup ticket by token, token hash, or ticket id
-    const ticket = this.db.tickets.find(
+    let ticket = this.db.tickets.find(
       t => t.ticket_token === cleanToken ||
            t.ticket_token_hash === cleanToken ||
            t.id.toLowerCase() === cleanToken.toLowerCase()
@@ -552,20 +566,29 @@ export class DatabaseService {
       const bookingOnly = this.db.bookings.find(
         b => b.booking_reference.toLowerCase() === cleanToken.toLowerCase()
       );
-      if (bookingOnly && bookingOnly.booking_status !== 'APPROVED' && bookingOnly.booking_status !== 'TICKET_SENT' && bookingOnly.booking_status !== 'CHECKED_IN') {
+
+      if (bookingOnly) {
+        const matchingTicket = this.db.tickets.find(t => t.booking_id === bookingOnly.id);
+        if (matchingTicket) {
+          ticket = matchingTicket;
+        } else if (bookingOnly.booking_status !== 'APPROVED' && bookingOnly.booking_status !== 'TICKET_SENT' && bookingOnly.booking_status !== 'CHECKED_IN') {
+          return {
+            status: 'NOT_CONFIRMED',
+            ticket: null,
+            booking: bookingOnly,
+            message: 'Booking is still pending or UNO challenges are incomplete.'
+          };
+        }
+      }
+
+      if (!ticket) {
         return {
-          status: 'NOT_CONFIRMED',
+          status: 'INVALID',
           ticket: null,
-          booking: bookingOnly,
-          message: 'Booking is still pending or UNO challenges are incomplete.'
+          booking: null,
+          message: 'No valid ticket record found for this code.'
         };
       }
-      return {
-        status: 'INVALID',
-        ticket: null,
-        booking: null,
-        message: 'No valid ticket record found for this code.'
-      };
     }
 
     const booking = this.db.bookings.find(b => b.id === ticket.booking_id) || null;

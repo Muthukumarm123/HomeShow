@@ -3,6 +3,7 @@ import { Camera, CheckCircle2, AlertTriangle, XCircle, Search, RefreshCw, Volume
 import { Html5Qrcode } from 'html5-qrcode';
 import confetti from 'canvas-confetti';
 import { Ticket, FamilyBooking } from '../../types.ts';
+import { dataService } from '../../services/dataService.ts';
 
 interface ScanResultData {
   status: 'VALID' | 'ALREADY_CHECKED_IN' | 'INVALID' | 'NOT_CONFIRMED';
@@ -116,17 +117,7 @@ export const QrScannerTab: React.FC = () => {
     setCheckInSuccess(false);
 
     try {
-      const adminToken = localStorage.getItem('jailer_admin_token');
-      const res = await fetch('/api/admin/tickets/verify-token', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: JSON.stringify({ token: tokenString.trim() })
-      });
-
-      const data: ScanResultData = await res.json();
+      const data: ScanResultData = await dataService.verifyToken(tokenString.trim());
       setScanResult(data);
 
       if (data.status === 'VALID') {
@@ -138,7 +129,7 @@ export const QrScannerTab: React.FC = () => {
         });
       }
     } catch (err: any) {
-      setCameraError(err.message || 'Server error while verifying ticket');
+      setCameraError(err.message || 'Error while verifying ticket');
     } finally {
       setIsVerifying(false);
     }
@@ -149,22 +140,9 @@ export const QrScannerTab: React.FC = () => {
 
     setIsCheckingIn(true);
     try {
-      const adminToken = localStorage.getItem('jailer_admin_token');
-      const res = await fetch('/api/admin/tickets/confirm-check-in', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${adminToken}`
-        },
-        body: JSON.stringify({
-          ticket_id: scanResult.ticket.id,
-          admin_user: 'Organizer'
-        })
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to check in ticket');
+      const result = await dataService.confirmCheckIn(scanResult.ticket.id, 'Organizer');
+      if (!result.success) {
+        throw new Error(result.message || 'Failed to check in ticket');
       }
 
       setCheckInSuccess(true);
